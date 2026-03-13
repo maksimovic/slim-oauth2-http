@@ -6,25 +6,11 @@ use Chadicus\Slim\OAuth2\Http\ResponseBridge;
 use OAuth2\Response;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Unit tests for the \Chadicus\Slim\OAuth2\Http\ResponseBridge class.
- *
- * @coversDefaultClass \Chadicus\Slim\OAuth2\Http\ResponseBridge
- * @covers ::<private>
- */
 final class ResponseBridgeTest extends TestCase
 {
-    /**
-     * Verify basic behavior of fromOAuth2()
-     *
-     * @test
-     * @covers ::fromOAuth2
-     *
-     * @return void
-     */
-    public function fromOAuth2()
+    public function testFromOAuth2BasicResponse(): void
     {
-        $oauth2Response =  new Response(
+        $oauth2Response = new Response(
             ['foo' => 'bar', 'abc' => '123'],
             200,
             ['Content-Type' => 'application/json', 'Accept-Encoding' => 'gzip, deflate']
@@ -49,17 +35,9 @@ final class ResponseBridgeTest extends TestCase
         $this->assertSame(json_encode(['foo' => 'bar', 'abc' => '123']), (string)$slimResponse->getBody());
     }
 
-    /**
-     * Verify behavior of fromOAuth2() with empty response body.
-     *
-     * @test
-     * @covers ::fromOAuth2
-     *
-     * @return void
-     */
-    public function fromOAuth2EmptyBody()
+    public function testFromOAuth2EmptyBody(): void
     {
-        $oauth2Response =  new Response(
+        $oauth2Response = new Response(
             [],
             204,
             ['Content-Type' => 'application/json']
@@ -80,17 +58,9 @@ final class ResponseBridgeTest extends TestCase
         $this->assertSame('', (string)$slimResponse->getBody());
     }
 
-    /**
-     * Verify response can be written to when empty.
-     *
-     * @test
-     * @covers ::fromOAuth2
-     *
-     * @return void
-     */
-    public function fromOAuth2WritableEmptyBody()
+    public function testFromOAuth2WritableEmptyBody(): void
     {
-        $oauth2Response =  new Response(
+        $oauth2Response = new Response(
             [],
             204,
             ['Content-Type' => 'application/json']
@@ -111,5 +81,78 @@ final class ResponseBridgeTest extends TestCase
         );
 
         $this->assertSame('I was here', (string)$slimResponse->getBody());
+    }
+
+    public function testFromOAuth2ErrorResponse(): void
+    {
+        $oauth2Response = new Response(
+            ['error' => 'invalid_grant', 'error_description' => 'The access token provided is expired'],
+            401,
+            ['Content-Type' => 'application/json']
+        );
+
+        $slimResponse = ResponseBridge::fromOAuth2($oauth2Response);
+
+        $this->assertSame(401, $slimResponse->getStatusCode());
+
+        $body = json_decode((string)$slimResponse->getBody(), true);
+        $this->assertSame('invalid_grant', $body['error']);
+        $this->assertSame('The access token provided is expired', $body['error_description']);
+    }
+
+    public function testFromOAuth2WithNoHeaders(): void
+    {
+        $oauth2Response = new Response(
+            ['test' => 'value'],
+            200,
+            []
+        );
+
+        $slimResponse = ResponseBridge::fromOAuth2($oauth2Response);
+
+        $this->assertSame(200, $slimResponse->getStatusCode());
+        $this->assertSame([], $slimResponse->getHeaders());
+        $this->assertSame(json_encode(['test' => 'value']), (string)$slimResponse->getBody());
+    }
+
+    public function testFromOAuth2RedirectResponse(): void
+    {
+        $oauth2Response = new Response(
+            [],
+            302,
+            ['Location' => 'https://example.com/callback?code=abc123']
+        );
+
+        $slimResponse = ResponseBridge::fromOAuth2($oauth2Response);
+
+        $this->assertSame(302, $slimResponse->getStatusCode());
+        $this->assertSame(['https://example.com/callback?code=abc123'], $slimResponse->getHeader('Location'));
+        $this->assertSame('', (string)$slimResponse->getBody());
+    }
+
+    public function testFromOAuth2ReturnsPsrResponseInterface(): void
+    {
+        $oauth2Response = new Response();
+
+        $slimResponse = ResponseBridge::fromOAuth2($oauth2Response);
+
+        $this->assertInstanceOf(\Psr\Http\Message\ResponseInterface::class, $slimResponse);
+    }
+
+    public function testFromOAuth2MultipleHeaderValues(): void
+    {
+        $oauth2Response = new Response(
+            ['data' => 'test'],
+            200,
+            [
+                'X-Custom' => 'val1, val2, val3',
+                'Cache-Control' => 'no-cache, no-store',
+            ]
+        );
+
+        $slimResponse = ResponseBridge::fromOAuth2($oauth2Response);
+
+        $this->assertSame(['val1', 'val2', 'val3'], $slimResponse->getHeader('X-Custom'));
+        $this->assertSame(['no-cache', 'no-store'], $slimResponse->getHeader('Cache-Control'));
     }
 }

@@ -1,69 +1,43 @@
 # Chadicus\Slim\OAuth2\Http
 
-[![Build Status](https://travis-ci.org/chadicus/slim-oauth2-http.svg?branch=master)](https://travis-ci.org/chadicus/slim-oauth2-http)
-[![Code Quality](https://scrutinizer-ci.com/g/chadicus/slim-oauth2-http/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/chadicus/slim-oauth2-http/?branch=master)
-[![Code Coverage](https://coveralls.io/repos/github/chadicus/slim-oauth2-http/badge.svg?branch=master)](https://coveralls.io/github/chadicus/slim-oauth2-http?branch=master)
+> **Fork Notice:** This is a maintained fork of the abandoned [`chadicus/slim-oauth2-http`](https://github.com/chadicus/slim-oauth2-http) package. Updated for PHP 8.1+ with support for `laminas/laminas-diactoros` v3.
 
-[![Latest Stable Version](https://poser.pugx.org/chadicus/slim-oauth2-http/v/stable)](https://packagist.org/packages/chadicus/slim-oauth2-http)
-[![Latest Unstable Version](https://poser.pugx.org/chadicus/slim-oauth2-http/v/unstable)](https://packagist.org/packages/chadicus/slim-oauth2-http)
-[![License](https://poser.pugx.org/chadicus/slim-oauth2-http/license)](https://packagist.org/packages/chadicus/slim-oauth2-http)
-
-[![Total Downloads](https://poser.pugx.org/chadicus/slim-oauth2-http/downloads)](https://packagist.org/packages/chadicus/slim-oauth2-http)
-[![Daily Downloads](https://poser.pugx.org/chadicus/slim-oauth2-http/d/daily)](https://packagist.org/packages/chadicus/slim-oauth2-http)
-[![Monthly Downloads](https://poser.pugx.org/chadicus/slim-oauth2-http/d/monthly)](https://packagist.org/packages/chadicus/slim-oauth2-http)
-
-[![Documentation](https://img.shields.io/badge/reference-phpdoc-blue.svg?style=flat)](http://pholiophp.org/chadicus/slim-oauth2-http)
-
-Static utilitiy classes to bridge [PSR-7](http://www.php-fig.org/psr/psr-7/) http messages to [OAuth2 Server](http://bshaffer.github.io/oauth2-server-php-docs/) requests and responses. While this libray is entended for use with [Slim 3](http://www.slimframework.com/), it should work with any PSR-7 compatible framework.
+Static utility classes to bridge [PSR-7](http://www.php-fig.org/psr/psr-7/) HTTP messages to [OAuth2 Server](http://bshaffer.github.io/oauth2-server-php-docs/) requests and responses. While this library is intended for use with [Slim](http://www.slimframework.com/), it should work with any PSR-7 compatible framework.
 
 ## Requirements
 
-Chadicus\Slim\OAuth2\Http requires PHP 5.6 (or later).
+- PHP 8.1+
+- [bshaffer/oauth2-server-php](https://github.com/bshaffer/oauth2-server-php) ^1.8
+- [laminas/laminas-diactoros](https://github.com/laminas/laminas-diactoros) ^2.0 || ^3.0
 
-## Composer
-To add the library as a local, per-project dependency use [Composer](http://getcomposer.org)! Simply add a dependency on `chadicus/slim-oauth2-http` to your project's `composer.json` file such as:
-
-```sh
-composer require chadicus/slim-oauth2-http
-```
-
-## Contact
-Developers may be contacted at:
-
- * [Pull Requests](https://github.com/chadicus/slim-oauth2-http/pulls)
- * [Issues](https://github.com/chadicus/slim-oauth2-http/issues)
-
-## Project Build
-With a checkout of the code get [Composer](http://getcomposer.org) in your PATH and run:
+## Installation
 
 ```sh
-composer install
-./vendor/bin/phpunit
-./vendor/bin/phpcs
+composer require maksimovic/slim-oauth2-http
 ```
 
-## Community
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/slim-oauth2/Lobby#)
-
-## Available Operations
+## Usage
 
 ### Convert a PSR-7 request to an OAuth2 request
+
 ```php
 use Chadicus\Slim\OAuth2\Http\RequestBridge;
 
 $oauth2Request = RequestBridge::toOAuth2($psrRequest);
 ```
 
-### Convert an OAuth2 response to a PSR-7 response.
+### Convert an OAuth2 response to a PSR-7 response
+
 ```php
 use Chadicus\Slim\OAuth2\Http\ResponseBridge;
 
-$psr7Response = ResponseBridge::fromOAuth2($oauth2Request);
+$psr7Response = ResponseBridge::fromOAuth2($oauth2Response);
 ```
 
-## Example Integeration
+## Example Integration
 
-### Simple route for creating a new oauth2 access token
+### Simple route for creating a new OAuth2 access token
+
 ```php
 use Chadicus\Slim\OAuth2\Http\RequestBridge;
 use Chadicus\Slim\OAuth2\Http\ResponseBridge;
@@ -96,14 +70,26 @@ $server = new OAuth2\Server(
 $app = new Slim\App();
 
 $app->post('/token', function ($psrRequest, $psrResponse, array $args) use ($app, $server) {
-    //create an \OAuth2\Request from the current \Slim\Http\Request Object
+    // Create an \OAuth2\Request from the PSR-7 request
     $oauth2Request = RequestBridge::toOAuth2($psrRequest);
 
-    //Allow the oauth2 server instance to handle the oauth2 request
-    $oauth2Response = $server->handleTokenRequest($oauth2Request),
+    // Let the OAuth2 server handle the request
+    $oauth2Response = $server->handleTokenRequest($oauth2Request);
 
-    //Map the oauth2 response into the slim response
+    // Map the OAuth2 response to a PSR-7 response
     return ResponseBridge::fromOAuth2($oauth2Response);
 });
-
 ```
+
+## Development
+
+```sh
+composer install
+composer test
+composer test:coverage
+composer cs-check
+```
+
+## License
+
+[MIT](LICENSE)
