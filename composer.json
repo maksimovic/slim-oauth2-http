@@ -8,6 +8,9 @@
         "bshaffer/oauth2-server-php": "^1.8",
         "laminas/laminas-diactoros": "^2.0 || ^3.0"
     },
+    "replace": {
+        "chadicus/slim-oauth2-http": "self.version"
+    },
     "config" : {
         "sort-packages": true
     },
