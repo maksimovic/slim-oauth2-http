@@ -2,3 +2,4 @@
 /build/
 humbuglog.*
 composer.lock
+.DS_Store
